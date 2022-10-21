@@ -1,0 +1,31 @@
+[
+  {
+      "id": 5534,
+      "Material": "Cemento",
+      "Precio": 750,
+      "stock": 100,
+      "pictureUrl":"../src/assets/Maceta1.png"
+      },
+      {
+      "id": 5807,
+      "Material": "Papel",
+      "Precio": 150,
+      "stock": 10,
+      "pictureUrl":"../src/assets/Separador 1.png"
+      },
+      {
+      "id": 5798,
+      "Material": "Papel",
+      "Precio": 150,
+      "stock": 10,
+      "pictureUrl":"../src/assets/Separador 2.png"
+      },
+      {
+      "id": 5427,
+      "Material": "Papel",
+      "Precio": 150,
+      "stock": 10,
+      "pictureUrl":"../src/assets/Separador 3.png"
+      }
+      
+      ]
