@@ -10,7 +10,17 @@ router.get('/health', (_req, res) => {
         health: 'Up!'
     })
 })
+
+process.cwd();
+process.pid;
+process.version;
+process.title;
+process.plataform;
+process.memoryUsage();
+
 .use(pagesRouter)
 .use('/api', sessionRouter);
 
 module.exports = router;
+
+
