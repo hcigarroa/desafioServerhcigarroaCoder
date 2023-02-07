@@ -43,11 +43,7 @@ app.get("/", function(req, res){
 app.get("/calculo", function(req, res){
     let sum = calculo()
     res.send("LA sumaes es : ", sum)
-    // const comp =  fork("./calculo.js")
-    // comp.send("start")
-    // comp.on("message", function(sum){
-    //     res.send("la suma es : " + sum)
-    // })
+   })
 })
 app.listen(8080, function(){
     console.log("Server run on port 8080")
