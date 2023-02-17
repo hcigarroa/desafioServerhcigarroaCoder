@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const pagesRouter = require('./pages/pages.routes');
 const sessionRouter = require('./session/session.routes');
-
+const log4js = require('log4js');
+const winston = require('winston');
 router.get('/health', (_req, res) => {
     res.status(200).json({
         success: true,
@@ -18,7 +19,7 @@ process.title;
 process.plataform;
 process.memoryUsage();
 
-.use(pagesRouter)
+ use(pagesRouter)
 .use('/api', sessionRouter);
 
 module.exports = router;
@@ -44,7 +45,7 @@ app.get("/calculo", function(req, res){
     let sum = calculo()
     res.send("LA sumaes es : ", sum)
    })
-})
+
 app.listen(8080, function(){
     console.log("Server run on port 8080")
 
