@@ -1,84 +1,106 @@
+/**
+ * app.js
+ *
+ * Use `app.js` to run your app without `sails lift`.
+ * To start the server, run: `node app.js`.
+ *
+ * This is handy in situations where the sails CLI is not relevant or useful,
+ * such as when you deploy to a server, or a PaaS like Heroku.
+ *
+ * For example:
+ *   => `node app.js`
+ *   => `npm start`
+ *   => `forever start app.js`
+ *   => `node debug app.js`
+ *
+ * The same command-line arguments and env vars are supported, e.g.:
+ * `NODE_ENV=production node app.js --port=80 --verbose`
+ *
+ * For more information see:
+ *   https://sailsjs.com/anatomy/app.js
+ */
+
+
+// Ensure we're in the project directory, so cwd-relative paths work as expected
+// no matter where we actually lift from.
+// > Note: This is not required in order to lift, but it is a convenient default.
+process.chdir(__dirname);
+
+
+
+// Attempt to import `sails` dependency, as well as `rc` (for loading `.sailsrc` files).
+var sails;
+var rc;
+try {
+  sails = require('sails');
+  rc = require('sails/accessible/rc');
+} catch (err) {
+  console.error('Encountered an error when attempting to require(\'sails\'):');
+  console.error(err.stack);
+  console.error('--');
+  console.error('To run an app using `node app.js`, you need to have Sails installed');
+  console.error('locally (`./node_modules/sails`).  To do that, just make sure you\'re');
+  console.error('in the same directory as your app and run `npm install`.');
+  console.error();
+  console.error('If Sails is installed globally (i.e. `npm install -g sails`) you can');
+  console.error('also run this app with `sails lift`.  Running with `sails lift` will');
+  console.error('not run this file (`app.js`), but it will do exactly the same thing.');
+  console.error('(It even uses your app directory\'s local Sails install, if possible.)');
+  return;
+}//-•
+
+
+// Start server
+sails.lift(rc('sails'));
+
 const express = require('express');
-const session = require('express-session');
-const MongoStore = require('connect-mongo');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-require('dotenv').config();
-
-const mongooseConnect = require('./src/services/mongo/connect');
-
-const md5 = require('md5');
-
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-
-const UserModel = require('./src/services/mongo/models/user.model');
-
-const { getStoreConfig } = require('./src/services/session/session.config');
+const _ = require('lodash');
 const indexRouter = require('./src/routes/index');
+const errorMiddleware = require('./src/middlewares/errorMiddleware');
+require('dotenv').config();
 
 const app = express();
 
-const COOKIE_SECRET = process.env.COOKIE_SECRET || 'default';
-
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
-app.use(logger('tiny'));
 
-mongooseConnect();
-
-app.use(cookieParser(COOKIE_SECRET));
-
-app.use(session({
-    store: MongoStore.create(getStoreConfig()),
-    secret: COOKIE_SECRET,
-    resave: true,
-    saveUninitialized: true,
-    cookie: {
-        httpOnly: false,
-        secure: false
-    }
-}));
-
-app.set('view engine', 'ejs');
 app.set('views', './views');
+app.set('view engine', 'pug');
 
-passport.use('login', new LocalStrategy(async (username, password, done) => {
-    const userData = await UserModel.findOne({username, password: md5(password)});
-    if(!userData){
-        return done(null, false);
-    }
-    done(null, userData);
-}));
-
-passport.use('signup', new LocalStrategy({
-    passReqToCallback: true
-}, async (req, username, password, done) => {
-    const userData = await UserModel.findOne({username, password: md5(password)});
-    if(userData){
-        return done(null, false);
-    }
-    const stageUser = new UserModel({
-        username,
-        password: md5(password),
-        fullName: req.body.fullName
-    });
-    const newUser = await stageUser.save();
-    done(null, newUser);
-}));
-
-passport.serializeUser((user, done) => {
-    done(null, user._id);
+app.get('/health', (_req, res) => {
+    res.status(200).json({
+        success: true,
+        enviroment: process.env.ENVIRONMENT || 'undefine',
+        health: 'Up'
+    })
 });
 
-passport.deserializeUser(async (id, done) => {
-    const userData = await UserModel.findById(id);
-    done(null, userData);
+app.get('/', (_req, res) => {
+    res.render('index', {message: "Hola como va"})
 });
 
-app.use(passport.initialize());
-app.use(passport.session());
+app.get('/datos', (req, res) => {
+const {min, max, level, title } = req.query;
+if(_.isNil(min) || _.isNil(max) || _.isNil(level) || _.isNil(title)){
+    return res.render('error', {error: "Falta algun parametro flaco!"})
+}
+const diff = parseInt(max) - parseInt(min);
+const realLevel = parseInt(level) - parseInt(min);
+const perLevel = realLevel / diff;
+if(parseInt(level) > parseInt(max) || parseInt(level) < parseInt(min)){
+    return res.render('error', {error: "El nivel esta fuera de rango, revisalo chavito"})
+}
+res.render('datos', {max, min, perLevel, title})
+ })
 
-app.use(indexRouter);
+app.use('/public', express.static(__dirname + '/public'));
+
+app.use('/api', indexRouter);
+
+
+app.use(errorMiddleware);
+
+
+
 
 module.exports = app;
